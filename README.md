@@ -1,2 +1,2 @@
-# devman_cake_project
+# devman_cake_bot
 Телеграм-бот для создания персонализированных тортов
