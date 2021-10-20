@@ -1,1 +1,2 @@
-django-3.2.*
+django==3.2.*
+django-phonenumber-field==5.2.*
