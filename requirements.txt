@@ -1,2 +1,4 @@
 django==3.2.*
 django-phonenumber-field==5.2.*
+python-telegram-bot==13.7
+python-dotenv==0.19.*
