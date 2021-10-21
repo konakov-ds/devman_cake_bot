@@ -74,7 +74,7 @@ class Berry(models.Model):
 
 
 class Decor(models.Model):
-    TOPPINGS = [
+    DECORS = [
         ('PISTACHIO', 'Фисташки'),
         ('MERINGUE', 'Безе'),
         ('HAZELNUTS', 'Фундук'),
@@ -84,13 +84,8 @@ class Decor(models.Model):
     ]
     name = models.CharField(
         max_length=30,
-        choices=TOPPINGS,
+        choices=DECORS,
     )
-    price = models.DecimalField(max_digits=5, decimal_places=1)
-
-
-class Title(models.Model):
-    name = models.TextField()
     price = models.DecimalField(max_digits=5, decimal_places=1)
 
 
@@ -121,8 +116,19 @@ class Order(models.Model):
     delivery_date = models.DateTimeField(default=default_delivery)
     price = models.DecimalField(
         max_digits=5,
-        decimal_places=1
+        decimal_places=1,
+        default=0
     )
+
+
+class Title(models.Model):
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="cake_title"
+    )
+    name = models.TextField()
+    price = models.DecimalField(max_digits=5, decimal_places=1)
 
 
 class Cake(models.Model):
@@ -133,7 +139,7 @@ class Cake(models.Model):
         related_name="level"
     )
     shape = models.ForeignKey(
-        Level,
+        Shape,
         on_delete=models.CASCADE,
         related_name="shape"
     )
@@ -146,19 +152,22 @@ class Cake(models.Model):
         Berry,
         on_delete=models.CASCADE,
         related_name="berry",
-        blank=True
+        blank=True,
+        null=True
     )
     decor = models.ForeignKey(
         Decor,
         on_delete=models.CASCADE,
         related_name="decor",
-        blank=True
+        blank=True,
+        null=True
     )
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
         related_name="decor",
-        blank=True
+        blank=True,
+        null=True
     )
     order = models.ForeignKey(
         Order,

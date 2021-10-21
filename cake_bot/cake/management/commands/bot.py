@@ -1,6 +1,7 @@
 import os
 from django.core.management.base import BaseCommand
-from cake.models import*
+from cake.models import *
+from cake.serve import *
 from django.core.files import File
 from telegram import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, Update, user
 from telegram.ext import ConversationHandler, MessageHandler, CommandHandler, Updater, Filters, CallbackContext
@@ -14,9 +15,9 @@ token = os.getenv('TELEGRAM_TOKEN')
 class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
+        print(get_cake_decor('Фисташки'))
         updater = Updater(token, use_context=True)
         dispatcher = updater.dispatcher
-
         # conv_handler = ConversationHandler(
         #     entry_points=[
         #         MessageHandler(Filters.text(categories), start_bot),
@@ -35,6 +36,7 @@ class Command(BaseCommand):
         # )
 
         dispatcher.add_handler(CommandHandler('start', start_bot))
+        dispatcher.add_handler(MessageHandler(Filters.contact, get_base_user_info))
         updater.start_polling()
         updater.idle()
 
@@ -56,7 +58,7 @@ def main_keyboard(user_id):
         markup = ReplyKeyboardMarkup(
             keyboard=[
                 [
-                    KeyboardButton(text='✅ Даю согласие'),
+                    KeyboardButton(text='✅ Даю согласие', request_contact=True),
                 ],
             ],
             resize_keyboard=True
@@ -65,10 +67,7 @@ def main_keyboard(user_id):
 
 
 def start_bot(update, context):
-    #write_user_to_db(update)
     user_id = update.effective_chat.id
-    # random_photo[update.effective_chat.id] = []
-    # random_photo_ex[update.effective_chat.id] = []
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=('Привет!\n'
@@ -77,15 +76,17 @@ def start_bot(update, context):
               'согласие на обработку персональных данных.'),
         reply_markup=main_keyboard(user_id),
     )
-    context.bot.send_photo(
+    context.bot.send_document(
         chat_id=update.effective_chat.id,
-        photo=open('agree.png', 'rb')
+        document=open('agree.pdf', 'rb'),
+        filename='Согласие на обработку данных'
     )
-
-
-def get_user_info(update, context):
-    user_id = update.effective_chat.id
-    update.message.chat.
+    #print(create_order(update))
+    print(create_cake({
+        'level': '2 уровня',
+        'shape': 'Круг',
+        'topping': 'Черничный сироп'
+    }, 1))
 
 
 def cancel_handler(update, context):
