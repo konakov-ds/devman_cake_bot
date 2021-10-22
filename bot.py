@@ -303,15 +303,129 @@ def select_print(update, context):
         resize_keyboard=True
         ),
     )
-    return check_print_selection(update, context)
+    return 10
 
 
 def check_print_selection(update, context):
     if update.message.text == 'Без надписи':
-        print("Выбрал Без надписи")
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=("Комментарий к заказу (можно пропустить)"),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=[
+                    [
+                        KeyboardButton(text='Добавить комментарий')
+                    ],
+                    [
+                        KeyboardButton(text='Пропустить')
+                    ],
+                ],
+            resize_keyboard=True
+            ),
+        )
+        return 12
     
     elif update.message.text == 'Добавить надпись':
-        pass
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=("Введите надпись:"),
+    )
+    return 11
+
+
+def save_print(update, context):
+    cake_print = update.message.text
+
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=("Комментарий к заказу (можно пропустить)"),
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard=[
+                [
+                    KeyboardButton(text='Добавить комментарий')
+                ],
+                [
+                    KeyboardButton(text='Пропустить')
+                ],
+            ],
+        resize_keyboard=True
+        ),
+    )
+    return 12
+
+
+def ask_comment(update, context):
+    if update.message.text == 'Пропустить':
+        address = context.user_data["address"]
+
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=(f"Адрес доставки {address}?"),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=[
+                    [
+                        KeyboardButton(text='Да'),
+                        KeyboardButton(text='Нет'),
+                    ],
+                ],
+            resize_keyboard=True
+            ),
+        )
+        return 14
+    elif update.message.text == 'Добавить комментарий':
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=("Напишите комментарий"),
+        )
+        return 13
+
+
+def save_comment(update, context):
+    comment = update.message.text
+    address = context.user_data["address"]
+
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=(f"Адрес доставки {address}?"),
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard=[
+                [
+                    KeyboardButton(text='Да'),
+                    KeyboardButton(text='Нет'),
+                ],
+            ],
+            resize_keyboard=True,
+        )
+    )
+    return 14
+
+
+def check_address(update, context):
+    if update.message.text == "Да":
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=(f"Укажите время доставки в формате дд.мм.гггг"),
+        )
+        return 16
+    elif update.message.text == "Нет":
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=(f"Укажите адрес доставки:"),
+        )
+        return 15
+
+
+def save_address(update, context):
+    context.user_data["address"] = update.message.text
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=(f"Укажите время доставки в формате дд.мм.гггг:"),
+    )
+    return 16
+
+
+def ask_delivery_time(update, context):
+    pass
 
 
 def help(update, context):
@@ -346,6 +460,13 @@ constructor_handler = ConversationHandler(
         7:[MessageHandler(Filters.text, select_berries, pass_user_data=True)],
         8:[MessageHandler(Filters.text, select_decor, pass_user_data=True)],
         9:[MessageHandler(Filters.text, select_print, pass_user_data=True)],
+        10:[MessageHandler(Filters.text, check_print_selection, pass_user_data=True)],
+        11:[MessageHandler(Filters.text, save_print, pass_user_data=True)],
+        12:[MessageHandler(Filters.text, ask_comment, pass_user_data=True)],
+        13:[MessageHandler(Filters.text, save_comment, pass_user_data=True)],
+        14:[MessageHandler(Filters.text, check_address, pass_user_data=True)],
+        15:[MessageHandler(Filters.text, save_address, pass_user_data=True)],
+        16:[MessageHandler(Filters.text, ask_delivery_time, pass_user_data=True)],
     },
 
     fallbacks=[CommandHandler('stop', stop)]
