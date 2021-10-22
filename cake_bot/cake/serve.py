@@ -7,9 +7,10 @@ def get_base_user_info(update):
     user_info = {
         'tg_id': update.message.chat_id,
         'name': update.message.chat.first_name,
-        'last_name': update.message.chat.last_name,
-        'phone': update.message.contact.phone_number
+        'last_name': update.message.chat.last_name
     }
+    if update.message.contact:
+        user_info['phone'] = update.message.contact.phone_number
     return user_info
 
 
@@ -17,20 +18,10 @@ def validate_phone(phone):
     pass
 
 
-def write_user_to_db(
-        update,
-        name,
-        phone,
-        street,
-        house_number,
-        flat_number,
-        last_name=None
-):
-    base_user_info = get_base_user_info(update)
-    profile = Profile.objects.create(
-        **base_user_info
+def write_user_to_db(user_info):
+    Profile.objects.create(
+        **user_info
     )
-    print(f'Create profile {profile.name}')
 
 
 def get_cake_level(level):
@@ -78,3 +69,9 @@ def create_cake(cake_params, order_id):
         order=Order.objects.get(id=order_id)
     )
     return cake
+
+
+def check_client_orders(client_id):
+    client = Profile.objects.get(tg_id=client_id)
+    orders = Order.objects.filter(profile=client)
+    return orders.count() > 0

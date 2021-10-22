@@ -9,11 +9,11 @@ class Profile(models.Model):
     tg_id = models.IntegerField(unique=True)
     created_at = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100, blank=True)
-    phone = PhoneNumberField(region='RU', blank=True)
-    street = models.CharField(max_length=100, blank=True)
-    house_number = models.CharField(max_length=20, blank=True)
-    flat_number = models.CharField(max_length=20, blank=True)
+    last_name = models.CharField(max_length=100, blank=True, null=True)
+    phone = PhoneNumberField(region='RU', blank=True, null=True)
+    street = models.CharField(max_length=100, blank=True, null=True)
+    house_number = models.CharField(max_length=20, blank=True, null=True)
+    flat_number = models.CharField(max_length=20, blank=True, null=True)
 
 
 class Level(models.Model):
