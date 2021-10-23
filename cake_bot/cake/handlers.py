@@ -443,6 +443,7 @@ def check_print_selection(update, context):
         context.bot.send_message(
             chat_id=user_id,
             text=("Введите надпись:"),
+            reply_markup=ReplyKeyboardRemove()
         )
     return 11
 
@@ -494,6 +495,7 @@ def ask_comment(update, context):
         context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=("Напишите комментарий"),
+            reply_markup=ReplyKeyboardRemove()
         )
         return 13
 
@@ -524,13 +526,17 @@ def check_address(update, context):
     if update.message.text == "Да":
         context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=(f"Укажите время доставки в формате дд.мм.гггг"),
+            text='Укажите время доставки в формате ДД.ММ.2021 | ЧЧ:ММ\n'
+                 'Например 21.11.2021 | 17:00\n'
+            ,
+            reply_markup=ReplyKeyboardRemove()
         )
         return 16
     elif update.message.text == "Нет":
         context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=(f"Укажите адрес доставки:"),
+            reply_markup=ReplyKeyboardRemove()
         )
         return 15
 
@@ -540,104 +546,108 @@ def save_address(update, context):
     users_info[user_id]['street'] = update.message.text
     context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text=(f"Укажите время доставки в формате дд.мм.гггг:"),
+        text='Укажите время доставки в формате ДД.ММ.2021 | ЧЧ:ММ'
+             'Например 21.11.2021 | 17:00\n',
+        reply_markup=ReplyKeyboardRemove()
     )
     return 16
 
 
 def ask_delivery_time(update, context):
     user_id = update.effective_chat.id
-    cakes_info[user_id]['delivery_date'] = update.message.text
-    cake = cakes_info[user_id]
-    info = users_info[user_id]
+    delivery_date = validate_delivery_time(update.message.text)
+    if delivery_date:
+        cakes_info[user_id]['delivery_date'] = delivery_date
+        order_price = get_order_info(cakes_info[user_id])[1]
+        if check_fast_delivery(delivery_date):
+            order_price = float(order_price)*1.2
+        cakes_info[user_id]['price'] = order_price
+        context.bot.send_message(
+            chat_id=user_id,
+            text=(f'СУММА ВАШЕГО ЗАКАЗА: {order_price}\n'
+                  f'Есть ПРОМОКОД для получения скиди?'),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=[
+                    [
+                        KeyboardButton(text='ВВЕСТИ ПРОМОКОД'),
+                        KeyboardButton(text='ОФОРМИТЬ ЗАКАЗ'),
+                        KeyboardButton(text='ОТМЕНИТЬ ЗАКАЗ'),
+                    ],
+                ],
+                resize_keyboard=True,
+            )
+        )
+        return 18
+    else:
+        context.bot.send_message(
+            chat_id=user_id,
+            text=(
+                'Дата введена с ошибкой, попробуйте еще раз'
+            ),
+        )
+        return 16
+
+
+def apply_promocode(update, context):
+    user_id = update.effective_chat.id
+    promo = update.message.text
+    if promo == 'devman_20':
+        price = float(cakes_info[user_id]['price'])*0.8
+        cakes_info[user_id]['price'] = price
+        context.bot.send_message(
+            chat_id=user_id,
+            text=f'Промокод введен! Новая цена {price}',
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=[
+                    [
+                        KeyboardButton(text='ОФОРМИТЬ ЗАКАЗ'),
+                        KeyboardButton(text='ОТМЕНИТЬ ЗАКАЗ'),
+                    ],
+                ],
+                resize_keyboard=True,
+            )
+        )
+        return 18
+    else:
+        context.bot.send_message(
+            chat_id=user_id,
+            text=(
+                'Неправильный промокод, попробуйте еще раз'
+            ),
+        )
+        return 17
+
+
+def create_order_menu(update, context):
+    user_id = update.effective_chat.id
+    if update.message.text == "ВВЕСТИ ПРОМОКОД":
+        context.bot.send_message(
+            chat_id=user_id,
+            text='Введите промокод',
+            reply_markup=ReplyKeyboardRemove()
+        )
+        return 17
+    elif update.message.text == "ОТМЕНИТЬ ЗАКАЗ":
+        context.bot.send_message(
+            chat_id=user_id,
+            text='ЗАКАЗ ОТМЕНЕН!',
+            reply_markup=cake_keyboard(user_id)
+        )
+    elif update.message.text == "ОФОРМИТЬ ЗАКАЗ":
+        create_order(update, context)
+        return ConversationHandler.END
+
+
+def create_order(update, context):
+    user_id = update.effective_chat.id
+    info = cakes_info[user_id]
+
     context.bot.send_message(
-        chat_id=user_id,
-        text=(f'Вы указали {cake}, {info}'),
+        chat_id=update.effective_chat.id,
+        text=f'ЗАКАЗ ОФОРМЛЕН! {info}',
+        reply_markup=cake_keyboard(user_id)
     )
-
-
-
-# def select_print(update, context):
-#     user_id = update.effective_chat.id
-#
-#     cake_decor = update.message.text
-#     cakes_info[user_id]['decor'] = cake_decor
-#
-#     context.bot.send_message(
-#         chat_id=update.effective_chat.id,
-#         text=('Мы можем разместить на торте любую надпись, например:'
-#               ' «С днем рождения!»'),
-#         reply_markup=ReplyKeyboardMarkup(
-#             keyboard=[
-#                 [
-#                     KeyboardButton(text='Добавить надпись')
-#                 ],
-#                 [
-#                     KeyboardButton(text='Без надписи')
-#                 ],
-#             ],
-#             resize_keyboard=True
-#         ),
-#     )
-#     return 10
-#
-#
-# def check_print_selection(update, context):
-#     user_id = update.effective_chat.id
-#
-#     if update.message.text == 'Без надписи':
-#         context.bot.send_message(
-#             chat_id=update.effective_chat.id,
-#             text='Торт будет без надписи',
-#             reply_markup=cake_keyboard(user_id)
-#         )
-#         cakes_info[user_id]['title'] = ''
-#         # order = create_order(update)
-#         # cakes_info[user_id]['order'] = order
-#         # write_title_db(order, name='', price=0)
-#
-#     elif update.message.text == 'Добавить надпись':
-#         context.bot.send_message(
-#             chat_id=update.effective_chat.id,
-#             text='Введите текст для торта',
-#             reply_markup=ReplyKeyboardRemove()
-#         )
-#         return 11
-#
-#
-# def show_order_price(update, context):
-#     user_id = update.effective_chat.id
-#
-#     if update.message.text == 'Сделать заказ':
-#         cake_price = create_cake(
-#             cakes_info[user_id],
-#             cakes_info[user_id]['order']
-#         )
-#         context.bot.send_message(
-#             chat_id=update.effective_chat.id,
-#             text=f'Цена вашего заказа составила: {cake_price}',
-#             reply_markup=cake_keyboard(user_id)
-#         )
-#
-#
-# def save_cake_title(update, context):
-#     user_id = update.message.chat_id
-#     title = update.message.text
-#
-#     if title:
-#         cakes_info[user_id]['title'] = title
-#         context.bot.send_message(
-#             chat_id=user_id,
-#             text=f'Надпись на торт : {title}, сохранена\n',
-#             #reply_markup=cake_keyboard(user_id)
-#         )
-#         info = cakes_info[user_id]
-#         context.bot.send_message(
-#             chat_id=user_id,
-#             text=f'Данные заказа {info}',
-#             # reply_markup=cake_keyboard(user_id)
-#         )
-#         return ConversationHandler.END
+    #return ConversationHandler.END
 
 def help(update, context):
     update.message.reply_text("Справка по проекту")
@@ -677,7 +687,10 @@ constructor_handler = ConversationHandler(
         14: [MessageHandler(Filters.text, check_address, pass_user_data=True)],
         15: [MessageHandler(Filters.text, save_address, pass_user_data=True)],
         16: [MessageHandler(Filters.text, ask_delivery_time, pass_user_data=True)],
+        17: [MessageHandler(Filters.text, apply_promocode, pass_user_data=True)],
+        18: [MessageHandler(Filters.text, create_order_menu, pass_user_data=True)],
     },
+
 
     fallbacks=[CommandHandler('stop', stop)]
 )
