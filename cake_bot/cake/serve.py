@@ -125,41 +125,45 @@ def get_order_info(cake_params):
 
 def get_cake_title(title, order):
     if title:
-        title = Title.objects.get(order=order)
-        title_p = title.price
+        title = Title.objects.get_or_create(
+            order=order,
+            name=title,
+            price=500
+        )
+        title_p = 500
     else:
         title_p = 0
     return title, title_p
 
 
-def create_order(tg_id):
-    profile = Profile.objects.get(tg_id=tg_id)
+def create_order(user_info, order_info):
+    profile = Profile.objects.get(tg_id=user_info['tg_id'])
+    comment = order_info['comment']
+    delivery_date = order_info['delivery_date']
+    price = order_info['price']
+
     order = Order.objects.create(
         profile=profile,
+        comment=comment,
+        delivery_date=delivery_date,
+        price=price
     )
     return order
 
 
-def create_cake(cake_params, order):
-    level, level_p = get_cake_level(cake_params['level'])
-    shape, shape_p = get_cake_shape(cake_params['shape'])
-    topping, topping_p = get_cake_topping(cake_params['topping'])
-    berry, berry_p = get_cake_berry(cake_params['berry'])
-    decor, decor_p = get_cake_decor(cake_params['decor'])
-    title, title_p = get_cake_title(order)
-    cake_price = level_p + shape_p + topping_p + berry_p + decor_p + title_p
+def create_cake(order, order_info):
+    params = get_order_info(order_info)[0]
+    title, _ = get_cake_title(order_info['title'], order)[0]
+
     Cake.objects.create(
-        level=level,
-        shape=shape,
-        topping=topping,
-        berry=berry,
-        decor=decor,
+        level=params[0],
+        shape=params[1],
+        topping=params[2],
+        berry=params[3],
+        decor=params[4],
         title=title,
         order=order
     )
-    order.price = cake_price
-    order.save()
-    return cake_price
 
 
 def check_client_orders(client_id):

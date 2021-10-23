@@ -13,64 +13,26 @@ load_dotenv()
 users_info = defaultdict()
 cakes_info = defaultdict()
 
-contact_keyboard = KeyboardButton('Отправить контакт', request_contact=True)
-location_keyboard = KeyboardButton('Ручной ввод')
-make_order_button = KeyboardButton('Сделать заказ')
-all_orders_button = KeyboardButton('История заказов')
-custom_keyboard = [[contact_keyboard, location_keyboard]]
-make_order = [[make_order_button]]
 
-MAKE_ORDER_KEYBOARD = ReplyKeyboardMarkup(make_order, resize_keyboard=True)
-SEND_CONTACT_KEYBOARD = ReplyKeyboardMarkup(custom_keyboard, resize_keyboard=True)
+SEND_CONTACT_KEYBOARD = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton('Ручной ввод'),
+            KeyboardButton('Отправить контакт', request_contact=True)
+        ]
+    ],
+    resize_keyboard=True
+)
 
 START_KEYBOARD = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text='Согласен'), KeyboardButton(text='Не согласен')
+            KeyboardButton(text='Согласен'),
+            KeyboardButton(text='Не согласен')
         ],
     ],
     resize_keyboard=True
 )
-
-
-LEVELS_KEYBOARD = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text='1 Уровень')
-        ],
-        [
-            KeyboardButton(text='2 Уровня')
-        ],
-        [
-            KeyboardButton(text='3 Уровня')
-        ],
-    ],
-    resize_keyboard=True
-)
-
-
-def contact_keyboard(user_id):
-    if check_client_orders(user_id):
-        markup = ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text='Собрать торт'),
-                    KeyboardButton(text='🔍 Мои заказы')
-                ],
-            ],
-            resize_keyboard=True
-        )
-        return markup
-    else:
-        markup = ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text='Собрать торт'),
-                ],
-            ],
-            resize_keyboard=True
-        )
-        return markup
 
 
 def cake_keyboard(user_id):
@@ -231,6 +193,7 @@ def select_level(update, context):
     user_id = update.effective_chat.id
     users_info[user_id] = get_user_info_from_db(user_id)
     cakes_info[user_id] = {}
+
     context.bot.send_message(
         chat_id=user_id,
         text=("Выберите количество уровней тортика"),
@@ -245,6 +208,9 @@ def select_level(update, context):
                 [
                     KeyboardButton(text='3 уровня')
                 ],
+                [
+                    KeyboardButton(text='Главное меню')
+                ],
             ],
             resize_keyboard=True
         ),
@@ -256,172 +222,265 @@ def select_level(update, context):
 def select_shape(update, context):
     user_id = update.effective_chat.id
 
-    cake_level = update.message.text
-    cakes_info[user_id]['level'] = cake_level
+    if update.message.text == "Главное меню":
+        update.message.reply_text(
+            f'Возвращаемся ...',
+            reply_markup=cake_keyboard(user_id)
+        )
+        return ConversationHandler.END
+    else:
+        cake_level = update.message.text
+        cakes_info[user_id]['level'] = cake_level
 
-    context.bot.send_message(
-        chat_id=user_id,
-        text=("Выберите форму"),
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text='Квадрат')
+        context.bot.send_message(
+            chat_id=user_id,
+            text=("Выберите форму"),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=[
+                    [
+                        KeyboardButton(text='Квадрат')
+                    ],
+                    [
+                        KeyboardButton(text='Круг')
+                    ],
+                    [
+                        KeyboardButton(text='Прямоугольник')
+                    ],
+                    [
+                        KeyboardButton(text='Главное меню')
+                    ],
                 ],
-                [
-                    KeyboardButton(text='Круг')
-                ],
-                [
-                    KeyboardButton(text='Прямоугольник')
-                ],
-            ],
-            resize_keyboard=True
-        ),
-    )
+                resize_keyboard=True
+            ),
+        )
 
-    return 6
+        return 6
 
 
 def select_toppings(update, context):
     user_id = update.effective_chat.id
+    if update.message.text == "Главное меню":
+        update.message.reply_text(
+            f'Возвращаемся ...',
+            reply_markup=cake_keyboard(user_id)
+        )
+        return ConversationHandler.END
+    else:
+        cake_shape = update.message.text
+        cakes_info[user_id]['shape'] = cake_shape
 
-    cake_shape = update.message.text
-    cakes_info[user_id]['shape'] = cake_shape
+        context.bot.send_message(
+            chat_id=user_id,
+            text=("Выберите топпинг"),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=[
+                    [
+                        KeyboardButton(text='Без топпинга')
+                    ],
+                    [
+                        KeyboardButton(text='Белый соус')
+                    ],
+                    [
+                        KeyboardButton(text='Карамельный сироп')
+                    ],
+                    [
+                        KeyboardButton(text='Кленовый сироп')
+                    ],
+                    [
+                        KeyboardButton(text='Клубничный сироп')
+                    ],
+                    [
+                        KeyboardButton(text='Черничный сироп')
+                    ],
+                    [
+                        KeyboardButton(text='Молочный шоколад')
+                    ],
+                    [
+                        KeyboardButton(text='Главное меню')
+                    ],
 
-    context.bot.send_message(
-        chat_id=user_id,
-        text=("Выберите топпинг"),
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text='Без топпинга')
                 ],
-                [
-                    KeyboardButton(text='Белый соус')
-                ],
-                [
-                    KeyboardButton(text='Карамельный сироп')
-                ],
-                [
-                    KeyboardButton(text='Кленовый сироп')
-                ],
-                [
-                    KeyboardButton(text='Клубничный сироп')
-                ],
-                [
-                    KeyboardButton(text='Черничный сироп')
-                ],
-                [
-                    KeyboardButton(text='Молочный шоколад')
-                ],
-
-            ],
-            resize_keyboard=True
-        ),
-    )
-    return 7
+                resize_keyboard=True
+            ),
+        )
+        return 7
 
 
 def select_berries(update, context):
     user_id = update.effective_chat.id
+    if update.message.text == "Главное меню":
+        update.message.reply_text(
+            f'Возвращаемся ...',
+            reply_markup=cake_keyboard(user_id)
+        )
+        return ConversationHandler.END
+    else:
+        cake_topping = update.message.text
+        cakes_info[user_id]['topping'] = cake_topping
 
-    cake_topping = update.message.text
-    cakes_info[user_id]['topping'] = cake_topping
-
-    context.bot.send_message(
-        chat_id=user_id,
-        text=("Добавить ягоды?"),
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text='Без ягод')
+        context.bot.send_message(
+            chat_id=user_id,
+            text=("Добавить ягоды?"),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=[
+                    [
+                        KeyboardButton(text='Без ягод')
+                    ],
+                    [
+                        KeyboardButton(text='Ежевика')
+                    ],
+                    [
+                        KeyboardButton(text='Малина')
+                    ],
+                    [
+                        KeyboardButton(text='Голубика')
+                    ],
+                    [
+                        KeyboardButton(text='Клубника')
+                    ],
+                    [
+                        KeyboardButton(text='Главное меню')
+                    ],
                 ],
-                [
-                    KeyboardButton(text='Ежевика')
-                ],
-                [
-                    KeyboardButton(text='Малина')
-                ],
-                [
-                    KeyboardButton(text='Голубика')
-                ],
-                [
-                    KeyboardButton(text='Клубника')
-                ],
-            ],
-            resize_keyboard=True
-        ),
-    )
-    return 8
+                resize_keyboard=True
+            ),
+        )
+        return 8
 
 
 def select_decor(update, context):
     user_id = update.effective_chat.id
+    if update.message.text == "Главное меню":
+        update.message.reply_text(
+            f'Возвращаемся ...',
+            reply_markup=cake_keyboard(user_id)
+        )
+        return ConversationHandler.END
+    else:
+        cake_berry = update.message.text
+        cakes_info[user_id]['berry'] = cake_berry
 
-    cake_berry = update.message.text
-    cakes_info[user_id]['berry'] = cake_berry
-
-    context.bot.send_message(
-        chat_id=user_id,
-        text=("Как украсить?"),
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text='Без декора')
+        context.bot.send_message(
+            chat_id=user_id,
+            text=("Как украсить?"),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=[
+                    [
+                        KeyboardButton(text='Без декора')
+                    ],
+                    [
+                        KeyboardButton(text='Фисташки')
+                    ],
+                    [
+                        KeyboardButton(text='Безе')
+                    ],
+                    [
+                        KeyboardButton(text='Фундук')
+                    ],
+                    [
+                        KeyboardButton(text='Пекан')
+                    ],
+                    [
+                        KeyboardButton(text='Маршмеллоу')
+                    ],
+                    [
+                        KeyboardButton(text='Марципан')
+                    ],
+                    [
+                        KeyboardButton(text='Главное меню')
+                    ],
                 ],
-                [
-                    KeyboardButton(text='Фисташки')
-                ],
-                [
-                    KeyboardButton(text='Безе')
-                ],
-                [
-                    KeyboardButton(text='Фундук')
-                ],
-                [
-                    KeyboardButton(text='Пекан')
-                ],
-                [
-                    KeyboardButton(text='Маршмеллоу')
-                ],
-                [
-                    KeyboardButton(text='Марципан')
-                ],
-            ],
-            resize_keyboard=True
-        ),
-    )
-    return 9
+                resize_keyboard=True
+            ),
+        )
+        return 9
 
 
 def select_print(update, context):
     user_id = update.effective_chat.id
+    if update.message.text == "Главное меню":
+        update.message.reply_text(
+            f'Возвращаемся ...',
+            reply_markup=cake_keyboard(user_id)
+        )
+        return ConversationHandler.END
+    else:
+        cake_decor = update.message.text
+        cakes_info[user_id]['decor'] = cake_decor
 
-    cake_decor = update.message.text
-    cakes_info[user_id]['decor'] = cake_decor
-
-    context.bot.send_message(
-        chat_id=user_id,
-        text=("Мы можем разместить на торте любую надпись, например: «С днем рождения!»"),
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text='Добавить надпись')
+        context.bot.send_message(
+            chat_id=user_id,
+            text=("Мы можем разместить на торте любую надпись, например: «С днем рождения!»"),
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=[
+                    [
+                        KeyboardButton(text='Добавить надпись')
+                    ],
+                    [
+                        KeyboardButton(text='Без надписи')
+                    ],
+                    [
+                        KeyboardButton(text='Главное меню')
+                    ],
                 ],
-                [
-                    KeyboardButton(text='Без надписи')
-                ],
-            ],
-            resize_keyboard=True
-        ),
-    )
-    return 10
+                resize_keyboard=True
+            ),
+        )
+        return 10
 
 
 def check_print_selection(update, context):
     user_id = update.effective_chat.id
+    if update.message.text == "Главное меню":
+        update.message.reply_text(
+            f'Возвращаемся ...',
+            reply_markup=cake_keyboard(user_id)
+        )
+        return ConversationHandler.END
+    else:
+        if update.message.text == 'Без надписи':
+            cakes_info[user_id]['title'] = ''
+            context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text=("Комментарий к заказу (можно пропустить)"),
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard=[
+                        [
+                            KeyboardButton(text='Добавить комментарий')
+                        ],
+                        [
+                            KeyboardButton(text='Пропустить')
+                        ],
+                        [
+                            KeyboardButton(text='Главное меню')
+                        ],
+                    ],
+                    resize_keyboard=True
+                ),
+            )
+            return 12
 
-    if update.message.text == 'Без надписи':
-        cakes_info[user_id]['title'] = ''
+        elif update.message.text == 'Добавить надпись':
+            context.bot.send_message(
+                chat_id=user_id,
+                text=("Введите надпись:"),
+                reply_markup=ReplyKeyboardRemove()
+            )
+        return 11
+
+
+def save_print(update, context):
+    user_id = update.effective_chat.id
+    if update.message.text == "Главное меню":
+        update.message.reply_text(
+            f'Возвращаемся ...',
+            reply_markup=cake_keyboard(user_id)
+        )
+        return ConversationHandler.END
+    else:
+        cake_title = update.message.text
+        cakes_info[user_id]['title'] = cake_title
+
         context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=("Комментарий к заказу (можно пропустить)"),
@@ -433,43 +492,14 @@ def check_print_selection(update, context):
                     [
                         KeyboardButton(text='Пропустить')
                     ],
+                    [
+                        KeyboardButton(text='Главное меню')
+                    ],
                 ],
                 resize_keyboard=True
             ),
         )
         return 12
-
-    elif update.message.text == 'Добавить надпись':
-        context.bot.send_message(
-            chat_id=user_id,
-            text=("Введите надпись:"),
-            reply_markup=ReplyKeyboardRemove()
-        )
-    return 11
-
-
-def save_print(update, context):
-    user_id = update.effective_chat.id
-
-    cake_title = update.message.text
-    cakes_info[user_id]['title'] = cake_title
-
-    context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text=("Комментарий к заказу (можно пропустить)"),
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text='Добавить комментарий')
-                ],
-                [
-                    KeyboardButton(text='Пропустить')
-                ],
-            ],
-            resize_keyboard=True
-        ),
-    )
-    return 12
 
 
 def ask_comment(update, context):
@@ -634,20 +664,40 @@ def create_order_menu(update, context):
             reply_markup=cake_keyboard(user_id)
         )
     elif update.message.text == "ОФОРМИТЬ ЗАКАЗ":
-        create_order(update, context)
+        create_cake_order(update, context)
         return ConversationHandler.END
 
 
-def create_order(update, context):
+def create_cake_order(update, context):
     user_id = update.effective_chat.id
     info = cakes_info[user_id]
-
+    user = users_info[user_id]
+    order = create_order(user, info)
+    create_cake(order, info)
     context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text=f'ЗАКАЗ ОФОРМЛЕН! {info}',
+        text=f'ЗАКАЗ ОФОРМЛЕН!',
         reply_markup=cake_keyboard(user_id)
     )
-    #return ConversationHandler.END
+    return ConversationHandler.END
+
+
+def show_orders(update, context):
+    user_id = update.effective_chat.id
+    client = Profile.objects.get(tg_id=user_id)
+    statuses = {i[0]: i[1] for i in Order.ORDER_STATUS}
+    if update.message.text == '🔍 Мои заказы':
+        orders = Order.objects.filter(profile=client)
+
+        for order in orders:
+            context.bot.send_message(
+                chat_id=user_id,
+                text=f'Цена: {order.price}\n'
+                     f'Дата доставки: {order.delivery_date}\n'
+                     f'Статус: {statuses[order.status]}',
+                reply_markup=cake_keyboard(user_id),
+            )
+
 
 def help(update, context):
     update.message.reply_text("Справка по проекту")

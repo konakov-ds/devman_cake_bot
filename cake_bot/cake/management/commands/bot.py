@@ -2,7 +2,7 @@ import os
 from django.core.management.base import BaseCommand
 from cake.models import *
 from cake.serve import *
-from cake.handlers import registration_handler, constructor_handler, help
+from cake.handlers import registration_handler, constructor_handler, show_orders, help
 from django.core.files import File
 from telegram import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, Update, user
 from telegram.ext import ConversationHandler, MessageHandler, CommandHandler, Updater, Filters, CallbackContext
@@ -20,6 +20,7 @@ class Command(BaseCommand):
 
         dispatcher.add_handler(registration_handler)
         dispatcher.add_handler(constructor_handler)
+        dispatcher.add_handler(MessageHandler(filters=Filters.text, callback=show_orders))
         dispatcher.add_handler(CommandHandler("help", help))
 
         updater.start_polling()
