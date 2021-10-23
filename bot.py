@@ -1,8 +1,9 @@
 import os
+from datetime import datetime
 
 from dotenv import load_dotenv
 from telegram import (Bot, KeyboardButton, ReplyKeyboardMarkup,
-                      ReplyKeyboardRemove, Update)
+                      ReplyKeyboardRemove, Update, update)
 from telegram.ext import (CallbackContext, CommandHandler, ConversationHandler,
                           Filters, MessageHandler, Updater)
 
@@ -110,14 +111,9 @@ def ask_address(update, context):
     address = update.message.text
     context.user_data["address"] = address
     update.message.reply_text(
-        f"Адрес доставки, {address}, сохранен"
+        f"Адрес доставки, {address}, сохранен. Регистрация закончена."
     )
-    if not context.user_data.get("orders"):
-        update.message.reply_text(
-            f"Регистрация закончена. Можно начинать собирать тортики",
-            reply_markup=MAKE_ORDER_KEYBOARD
-        )
-    return ConversationHandler.END
+    return main_menu(update, context)
 
 
 def check_phone_number(update, context):
@@ -126,7 +122,7 @@ def check_phone_number(update, context):
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=(
-            f'Контактный номер телефона {phone_number} сохранен.\n '
+            f"Контактный номер телефона {phone_number} сохранен.\n "
             "Укажите адрес доставки:"
         ),
         reply_markup=ReplyKeyboardRemove(),
@@ -149,6 +145,9 @@ def select_levels(update, context):
                 [
                     KeyboardButton(text='3 Уровня')
                 ],
+                [
+                    KeyboardButton(text='Главное меню')
+                ],
             ],
         resize_keyboard=True
         ),
@@ -159,6 +158,7 @@ def select_levels(update, context):
 def select_shape(update, context):
     # Сохраняем количество уровней из прошлого шага
     levels = update.message.text
+    
 
     context.bot.send_message(
         chat_id=update.effective_chat.id,
@@ -173,6 +173,9 @@ def select_shape(update, context):
                 ],
                 [
                     KeyboardButton(text='Прямоугольник')
+                ],
+                [
+                KeyboardButton(text='Главное меню')
                 ],
             ],
         resize_keyboard=True
@@ -419,13 +422,30 @@ def save_address(update, context):
     context.user_data["address"] = update.message.text
     context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text=(f"Укажите время доставки в формате дд.мм.гггг:"),
+        text=(f"Укажите время и дату доставки в формате дд.мм.гггг:"),
+        reply_markup=ReplyKeyboardRemove(),
     )
     return 16
 
 
 def ask_delivery_time(update, context):
-    pass
+    delivery_time = update.message.text
+
+
+def main_menu(update, context):
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=(f"Давай собирать новый тортик!"),
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard=[
+                [
+                    KeyboardButton(text='Сделать заказ')
+                ],
+            ],
+        resize_keyboard=True
+        ),
+    )
+    return ConversationHandler.END
 
 
 def help(update, context):
@@ -445,7 +465,7 @@ registration_handler = ConversationHandler(
         1: [MessageHandler(Filters.all, check_agreement, pass_user_data=True)],
         2: [MessageHandler(Filters.all, ask_contacts, pass_user_data=True)],
         3: [MessageHandler(Filters.text, check_phone_number, pass_user_data=True)],
-        4: [MessageHandler(Filters.text, ask_address, pass_user_data=True)]
+        4: [MessageHandler(Filters.text, ask_address, pass_user_data=True)],
     },
     
     fallbacks=[CommandHandler('stop', stop)]
@@ -469,7 +489,7 @@ constructor_handler = ConversationHandler(
         16:[MessageHandler(Filters.text, ask_delivery_time, pass_user_data=True)],
     },
 
-    fallbacks=[CommandHandler('stop', stop)]
+    fallbacks=[MessageHandler(Filters.text("Главное меню"), main_menu)]
 )
 
 
