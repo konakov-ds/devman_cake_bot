@@ -62,7 +62,9 @@ def write_title_db(order, name, price):
 
 
 def get_cake_level(level):
+    print(level)
     levels = {i[1]: i[0] for i in Level.LEVELS}
+    print(levels)
     level = Level.objects.get(name=levels[level])
     level_p = level.price
     return level, level_p
@@ -132,6 +134,11 @@ def get_cake_title(title, order):
         )
         title_p = 500
     else:
+        title = Title.objects.get_or_create(
+            order=order,
+            name=title,
+            price=0
+        )
         title_p = 0
     return title, title_p
 
@@ -153,7 +160,7 @@ def create_order(user_info, order_info):
 
 def create_cake(order, order_info):
     params = get_order_info(order_info)[0]
-    title, _ = get_cake_title(order_info['title'], order)[0]
+    title = get_cake_title(order_info['title'], order)[0][0]
 
     Cake.objects.create(
         level=params[0],

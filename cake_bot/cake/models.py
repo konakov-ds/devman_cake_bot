@@ -20,7 +20,7 @@ class Level(models.Model):
     LEVELS = [
         ('1L', '1 уровень'),
         ('2L', '2 уровня'),
-        ('3L', 'З уровня'),
+        ('3L', '3 уровня'),
     ]
     name = models.CharField(
         max_length=10,

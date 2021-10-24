@@ -663,6 +663,7 @@ def create_order_menu(update, context):
             text='ЗАКАЗ ОТМЕНЕН!',
             reply_markup=cake_keyboard(user_id)
         )
+        return ConversationHandler.END
     elif update.message.text == "ОФОРМИТЬ ЗАКАЗ":
         create_cake_order(update, context)
         return ConversationHandler.END
@@ -679,6 +680,7 @@ def create_cake_order(update, context):
         text=f'ЗАКАЗ ОФОРМЛЕН!',
         reply_markup=cake_keyboard(user_id)
     )
+    cakes_info[user_id] = {}
     return ConversationHandler.END
 
 
